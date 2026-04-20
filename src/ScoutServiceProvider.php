@@ -4,31 +4,26 @@ namespace ClarkWinkelmann\Scout;
 
 use ClarkWinkelmann\Scout\Job\MakeSearchable;
 use ClarkWinkelmann\Scout\Job\RemoveFromSearch;
-use ClarkWinkelmann\Scout\Search\ImprovedGambitManager;
 use Flarum\Foundation\AbstractServiceProvider;
 use Flarum\Frontend\Assets;
 use Flarum\Frontend\Compiler\Source\SourceCollector;
-use Flarum\Search\GambitManager;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Contracts\Bus\Dispatcher;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Laravel\Scout\EngineManager;
 use Laravel\Scout\Scout;
-use MeiliSearch\Client as MeiliSearch;
+use Meilisearch\Client as MeiliSearch;
 
 /**
  * Similar to Laravel\Scout\ScoutServiceProvider without the config and command parts
  */
 class ScoutServiceProvider extends AbstractServiceProvider
 {
-    public function register()
+    public function register(): void
     {
         if (class_exists(MeiliSearch::class)) {
             $this->container->singleton(MeiliSearch::class, function () {
-                /**
-                 * @var SettingsRepositoryInterface $settings
-                 */
+                /** @var SettingsRepositoryInterface $settings */
                 $settings = $this->container->make(SettingsRepositoryInterface::class);
 
                 return new MeiliSearch(
@@ -53,19 +48,12 @@ class ScoutServiceProvider extends AbstractServiceProvider
             return [];
         });
 
-        // It's better to inject some javascript directly rather than write a javascript module. Benefits:
-        // - No additional bundle size if the feature is not used.
-        // - No need to wait for app.forum to be ready.
-        // - No Webpack overhead code.
-        // We could also skip the initializer entirely but this will produce better errors if something goes wrong.
-        // Only downside of this approach is that the cache must be cleared when the setting is changed.
+        // Inject minimum query length setting into the frontend
         $this->container->resolving('flarum.assets.forum', function (Assets $assets) {
-            /**
-             * @var $settings SettingsRepositoryInterface
-             */
+            /** @var SettingsRepositoryInterface $settings */
             $settings = $this->container->make(SettingsRepositoryInterface::class);
 
-            $length = (int)$settings->get('clarkwinkelmann-scout.queryMinLength');
+            $length = (int) $settings->get('clarkwinkelmann-scout.queryMinLength');
 
             if ($length > 0) {
                 $assets->js(function (SourceCollector $sources) use ($length) {
@@ -77,12 +65,10 @@ class ScoutServiceProvider extends AbstractServiceProvider
         });
     }
 
-    public function boot()
+    public function boot(): void
     {
         Collection::macro('searchable', function () {
-            /**
-             * @var Collection $this
-             */
+            /** @var Collection $this */
             if ($this->isEmpty()) {
                 return;
             }
@@ -109,9 +95,7 @@ class ScoutServiceProvider extends AbstractServiceProvider
         });
 
         Collection::macro('unsearchable', function () {
-            /**
-             * @var Collection $this
-             */
+            /** @var Collection $this */
             if ($this->isEmpty()) {
                 return;
             }
@@ -135,22 +119,5 @@ class ScoutServiceProvider extends AbstractServiceProvider
             // Queue and connection choice has been removed compared to original Scout code
             resolve(Dispatcher::class)->dispatch(new RemoveFromSearch($wrappedCollection));
         });
-
-        // Override the GambitManager binding set by Flarum's SearchServiceProvider
-        $fullTextGambits = $this->container->make('flarum.simple_search.fulltext_gambits');
-
-        foreach ($fullTextGambits as $searcher => $fullTextGambitClass) {
-            $this->container
-                ->when($searcher)
-                ->needs(GambitManager::class)
-                ->give(function () use ($searcher, $fullTextGambitClass) {
-                    $gambitManager = new ImprovedGambitManager($this->container->make($fullTextGambitClass));
-                    foreach (Arr::get($this->container->make('flarum.simple_search.gambits'), $searcher, []) as $gambit) {
-                        $gambitManager->add($this->container->make($gambit));
-                    }
-
-                    return $gambitManager;
-                });
-        }
     }
 }

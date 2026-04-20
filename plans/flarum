@@ -1,0 +1,108 @@
+# Flarum Scout 扩展 - Flarum 2.x 适配迁移记录
+
+## 已完成的修改
+
+### 1. [`composer.json`](composer.json) — 依赖版本升级
+
+- `flarum/core`: `^1.2` → `^2.0`
+- `laravel/scout`: `^9.4` → `^10.0`
+- `teamtnt/laravel-scout-tntsearch-driver`: `^11.6` → `^13.0`
+
+### 2. [`extend.php`](extend.php) — Extender API 适配
+
+- `Extend\SimpleFlarumSearch` → `Extend\Search`（Flarum 2.x 重命名）
+
+### 3. [`src/Extend/Scout.php`](src/Extend/Scout.php) — ExtenderInterface 签名适配
+
+- `extend(Container $container, Extension $extension = null)` → `extend(Container $container, ?Extension $extension = null)`
+
+### 4. [`src/ScoutServiceProvider.php`](src/ScoutServiceProvider.php) — 搜索系统适配
+
+- `Flarum\Search\GambitManager` → `Flarum\Search\Filter\FilterManager`
+- 容器绑定名称 `flarum.simple_search.fulltext_gambits` → `flarum.search.fulltext_filters`
+- 容器绑定名称 `flarum.simple_search.gambits` → `flarum.search.filters`
+
+### 5. [`src/Search/ImprovedGambitManager.php`](src/Search/ImprovedGambitManager.php) — 搜索管理器适配
+
+- 继承 `Flarum\Search\GambitManager` → `Flarum\Search\Filter\FilterManager`
+
+### 6. [`src/Search/DiscussionGambit.php`](src/Search/DiscussionGambit.php) — Gambit 接口适配
+
+- 实现 `Flarum\Search\GambitInterface` → `Flarum\Search\Filter\FilterInterface`
+
+### 7. [`src/Search/UserGambit.php`](src/Search/UserGambit.php) — Gambit 接口适配
+
+- 实现 `Flarum\Search\GambitInterface` → `Flarum\Search\Filter\FilterInterface`
+
+### 8. [`js/package.json`](js/package.json) — 前端构建依赖升级
+
+- `flarum-tsconfig`: `^1.0` → `^2.0`
+- `flarum-webpack-config`: `^2.0` → `^3.0`
+
+### 9. [`src/FlarumEngineManager.php`](src/FlarumEngineManager.php) — Scout 版本适配
+
+- UserAgent 版本号更新为 `10.0.0`
+
+### 10. [`src/ScoutStatic.php`](src/ScoutStatic.php) — Meilisearch 引擎命名空间适配
+
+- `Laravel\Scout\Engines\MeiliSearchEngine` → `Laravel\Scout\Engines\MeilisearchEngine`（Scout 10+ 修正拼写）
+
+### 11. [`src/Job/MakeSearchable.php`](src/Job/MakeSearchable.php) — 队列任务重构
+
+- 不再继承 `\Laravel\Scout\Jobs\MakeSearchable`，改为独立实现 `ShouldQueue` 接口
+- 显式使用 `Queueable` 和 `SerializesModels` trait
+- 使用 trait 冲突解决机制集成 `SerializesAndRestoresWrappedModelIdentifiers`
+
+### 12. [`src/Job/RemoveFromSearch.php`](src/Job/RemoveFromSearch.php) — 队列任务重构
+
+- 不再继承 `\Laravel\Scout\Jobs\RemoveFromSearch`，改为独立实现 `ShouldQueue` 接口
+- 同样使用 trait 冲突解决机制
+
+### 13. [`src/Console/ModifiedImportTrait.php`](src/Console/ModifiedImportTrait.php) — 命令 trait 适配
+
+- 简化为直接调用 `ScoutStatic::makeAllSearchable()`
+
+### 14. [`src/Console/ImportCommand.php`](src/Console/ImportCommand.php) — 命令适配
+
+- 不再继承 Scout 的 ImportCommand，改为独立实现
+- 自定义 `$signature` 和 `$description`
+
+### 15. [`src/Console/FlushCommand.php`](src/Console/FlushCommand.php) — 命令适配
+
+- 不再继承 Scout 的 FlushCommand，改为独立实现
+
+### 16. [`src/Console/ImportAllCommand.php`](src/Console/ImportAllCommand.php) — 命令适配
+
+- 移除 `Dispatcher` 依赖注入（事件处理移入 trait）
+
+### 17. [`src/FlarumSearchableScope.php`](src/FlarumSearchableScope.php) — 保持不变
+
+- Scope 接口和宏定义在 Laravel/Scout 10+ 中保持兼容
+
+---
+
+## 未修改的文件（无需修改或低风险）
+
+- [`src/helpers.php`](src/helpers.php) — `config()` 辅助函数替换，与 Flarum 版本无关
+- [`src/MakeSearchableDisable.php`](src/MakeSearchableDisable.php) — 禁用类，无需修改
+- [`src/Listener/DeletingDiscussion.php`](src/Listener/DeletingDiscussion.php) — 事件监听器，接口稳定
+- [`js/admin.ts`](js/admin.ts) — 入口文件，无需修改
+- [`js/webpack.config.js`](js/webpack.config.js) — 构建配置，API 稳定
+- [`js/tsconfig.json`](js/tsconfig.json) — 类型定义路径保持兼容
+- [`js/src/admin/index.ts`](js/src/admin/index.ts) — 前端管理面板代码，API 稳定
+- [`resources/locale/en.yml`](resources/locale/en.yml) — 语言文件，无需修改
+
+---
+
+## ⚠️ 需要验证的项目
+
+以下变更基于对 Flarum 2.x API 的推断，需要在实际环境中验证：
+
+1. **`Extend\Search`** — 确认 Flarum 2.x 是否确实将 `SimpleFlarumSearch` 重命名为 `Search`
+2. **`Filter\FilterInterface`** — 确认 Flarum 2.x 是否将 `GambitInterface` 重命名为 `FilterInterface`
+3. **`Filter\FilterManager`** — 确认 Flarum 2.x 是否将 `GambitManager` 重命名为 `FilterManager`
+4. **容器绑定名称** — 确认 `flarum.search.fulltext_filters` 和 `flarum.search.filters` 是否正确
+5. **`AbstractServiceProvider`** — 确认该基类在 Flarum 2.x 中是否仍然存在
+6. **Scout 10+ API** — 确认 `MeilisearchEngine`（修正拼写）是否正确
+7. **前端构建工具** — 确认 `flarum-tsconfig@^2.0` 和 `flarum-webpack-config@^3.0` 是否存在
+8. **TNTSearch driver** — 确认 `^13.0` 版本是否与 Scout 10 兼容

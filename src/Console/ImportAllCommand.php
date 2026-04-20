@@ -5,7 +5,6 @@ namespace ClarkWinkelmann\Scout\Console;
 use Flarum\Post\Post;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Contracts\Events\Dispatcher;
 
 class ImportAllCommand extends Command
 {
@@ -16,7 +15,7 @@ class ImportAllCommand extends Command
 
     protected $description = 'Import all Flarum models into the search index';
 
-    public function handle(Dispatcher $events, Container $container)
+    public function handle(Container $container)
     {
         $classes = array_keys($container->make('scout.attributes'));
 
@@ -26,7 +25,9 @@ class ImportAllCommand extends Command
                 continue;
             }
 
-            $this->handleClass($events, $class);
+            $this->import($class);
+
+            $this->info('All [' . $class . '] records have been imported.');
         }
     }
 }

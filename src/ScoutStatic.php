@@ -8,7 +8,7 @@ use Flarum\Post\Post;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Support\Arr;
 use Laravel\Scout\Builder;
-use Laravel\Scout\Engines\MeiliSearchEngine;
+use Laravel\Scout\Engines\MeilisearchEngine;
 
 /**
  * All the static method can't be implemented on UniversalModel since we don't know the target model
@@ -74,7 +74,7 @@ class ScoutStatic
     {
         $wrapped = new ScoutModelWrapper(new $class);
 
-        $isMeilisearch = $wrapped->searchableUsing() instanceof MeiliSearchEngine;
+        $isMeilisearch = $wrapped->searchableUsing() instanceof MeilisearchEngine;
 
         if ($isMeilisearch && is_null($callback) && class_exists(Highlighter::class)) {
             $callback = function ($meilisearch, $query, $searchParams) use ($class) {

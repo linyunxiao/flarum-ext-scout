@@ -7,14 +7,14 @@
     "type": "flarum-extension",
     "license": "MIT",
     "require": {
-        "flarum/core": "^1.2",
-        "laravel/scout": "^9.4",
+        "flarum/core": "^2.0",
+        "laravel/scout": "^10.0",
         "algolia/algoliasearch-client-php": "^3.2",
         "http-interop/http-factory-guzzle": "^1.0",
         "meilisearch/meilisearch-php": "*"
     },
     "require-dev": {
-        "teamtnt/laravel-scout-tntsearch-driver": "^11.6"
+        "teamtnt/laravel-scout-tntsearch-driver": "^13.0"
     },
     "suggest": {
         "clarkwinkelmann/flarum-ext-advanced-search-highlight": "*"

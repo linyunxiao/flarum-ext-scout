@@ -3,21 +3,32 @@
 namespace ClarkWinkelmann\Scout\Search;
 
 use ClarkWinkelmann\Scout\ScoutStatic;
-use Flarum\Search\GambitInterface;
+use Flarum\Database\DatabaseSearchState;
+use Flarum\Search\AbstractFulltextFilter;
 use Flarum\Search\SearchState;
 use Flarum\User\User;
 
-class UserGambit implements GambitInterface
+/**
+ * Fulltext filter that uses Scout to search users
+ *
+ * @extends AbstractFulltextFilter<DatabaseSearchState>
+ */
+class UserGambit extends AbstractFulltextFilter
 {
-    public function apply(SearchState $search, $bit)
+    public function search(SearchState $state, string $value): void
     {
-        $builder = ScoutStatic::makeBuilder(User::class, $bit);
+        // Cast to DatabaseSearchState to access getQuery()
+        if (!($state instanceof DatabaseSearchState)) {
+            return;
+        }
+
+        $builder = ScoutStatic::makeBuilder(User::class, $value);
 
         $ids = $builder->keys();
 
-        $search->getQuery()->whereIn('id', $ids);
+        $state->getQuery()->whereIn('id', $ids);
 
-        $search->setDefaultSort(function ($query) use ($ids) {
+        $state->setDefaultSort(function ($query) use ($ids) {
             if (!count($ids)) {
                 return;
             }

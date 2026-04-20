@@ -2,16 +2,24 @@
 
 namespace ClarkWinkelmann\Scout\Console;
 
-use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Console\Command;
 
-class ImportCommand extends \Laravel\Scout\Console\ImportCommand
+class ImportCommand extends Command
 {
+    protected $signature = 'scout:import
+            {model : Class name of model to bulk import}
+            {--c|chunk= : The number of records to import at a time}';
+
+    protected $description = 'Import the given model into the search index';
+
     use ModifiedImportTrait;
 
-    public function handle(Dispatcher $events)
+    public function handle()
     {
         $class = $this->argument('model');
 
-        $this->handleClass($events, $class);
+        $this->import($class);
+
+        $this->info('All [' . $class . '] records have been imported.');
     }
 }

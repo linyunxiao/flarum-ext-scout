@@ -23,7 +23,7 @@ class FlarumEngineManager extends EngineManager
     {
         $this->ensureAlgoliaClientIsInstalled();
 
-        UserAgent::addCustomUserAgent('Laravel Scout', '9.4.7');
+        UserAgent::addCustomUserAgent('Laravel Scout', '10.0.0');
 
         /**
          * @var SettingsRepositoryInterface $settings

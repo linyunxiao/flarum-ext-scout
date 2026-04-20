@@ -118,7 +118,7 @@ class Scout implements ExtenderInterface
         return $this;
     }
 
-    public function extend(Container $container, Extension $extension = null)
+    public function extend(Container $container, ?Extension $extension = null)
     {
         if (!class_exists($this->modelClass)) {
             return;

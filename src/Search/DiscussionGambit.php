@@ -3,21 +3,32 @@
 namespace ClarkWinkelmann\Scout\Search;
 
 use ClarkWinkelmann\Scout\ScoutStatic;
+use Flarum\Database\DatabaseSearchState;
 use Flarum\Discussion\Discussion;
 use Flarum\Post\Post;
-use Flarum\Search\GambitInterface;
+use Flarum\Search\AbstractFulltextFilter;
 use Flarum\Search\SearchState;
 use Illuminate\Database\Query\Expression;
 
-class DiscussionGambit implements GambitInterface
+/**
+ * Fulltext filter that uses Scout to search discussions and posts
+ *
+ * @extends AbstractFulltextFilter<DatabaseSearchState>
+ */
+class DiscussionGambit extends AbstractFulltextFilter
 {
-    public function apply(SearchState $search, $bit)
+    public function search(SearchState $state, string $value): void
     {
-        $discussionBuilder = ScoutStatic::makeBuilder(Discussion::class, $bit);
+        // Cast to DatabaseSearchState to access getQuery()
+        if (!($state instanceof DatabaseSearchState)) {
+            return;
+        }
+
+        $discussionBuilder = ScoutStatic::makeBuilder(Discussion::class, $value);
 
         $discussionIds = $discussionBuilder->keys()->all();
 
-        $postBuilder = ScoutStatic::makeBuilder(Post::class, $bit);
+        $postBuilder = ScoutStatic::makeBuilder(Post::class, $value);
 
         $postIds = $postBuilder->keys()->all();
         $postIdsCount = count($postIds);
@@ -27,10 +38,10 @@ class DiscussionGambit implements GambitInterface
         // we know nothing will be returned anyway, so it doesn't really matter what impact it has on the query
         $postIdsSql = $postIdsCount > 0 ? str_repeat(', ?', count($postIds)) : ', 0';
 
-        $query = $search->getQuery();
+        $query = $state->getQuery();
         $grammar = $query->getGrammar();
 
-        $allMatchingPostsQuery = Post::whereVisibleTo($search->getActor())
+        $allMatchingPostsQuery = Post::whereVisibleTo($state->getActor())
             ->select('posts.discussion_id')
             ->selectRaw('FIELD(id' . $postIdsSql . ') as priority', $postIds)
             ->where('posts.type', 'comment')
@@ -50,8 +61,8 @@ class DiscussionGambit implements GambitInterface
             ->groupBy('posts.discussion_id')
             ->addBinding($allMatchingPostsQuery->getBindings(), 'join');
 
-        // Code based on Flarum\Discussion\Search\Gambit\FulltextGambit
-        $subquery = Post::whereVisibleTo($search->getActor())
+        // Code based on Flarum\Discussion\Search\FulltextFilter
+        $subquery = Post::whereVisibleTo($state->getActor())
             ->select('posts.discussion_id')
             ->selectRaw('id as most_relevant_post_id')
             ->join(
@@ -80,7 +91,7 @@ class DiscussionGambit implements GambitInterface
             ->groupBy('discussions.id')
             ->addBinding($subquery->getBindings(), 'join');
 
-        $search->setDefaultSort(function ($query) use ($postIdsSql, $postIds) {
+        $state->setDefaultSort(function ($query) use ($postIdsSql, $postIds) {
             $query->orderByRaw('FIELD(id' . $postIdsSql . ')', $postIds);
         });
     }

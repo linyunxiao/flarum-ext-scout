@@ -8,9 +8,7 @@
     "compilerOptions": {
         "baseUrl": ".",
         "paths": {
-            "flarum/*": [
-                "../vendor/flarum/core/js/dist-typings/*"
-            ]
+            "flarum/*": ["../vendor/flarum/core/js/dist-typings/*"]
         }
     }
 }

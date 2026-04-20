@@ -12,7 +12,7 @@ use Laravel\Scout\Events\ModelsFlushed;
 use Laravel\Scout\Events\ModelsImported;
 
 /**
- * A re-implementation of Scout's SearchableScope that we can apply to generic models that don'have the Searchable trait
+ * A re-implementation of Scout's SearchableScope that we can apply to generic models that don't have the Searchable trait
  */
 class FlarumSearchableScope implements Scope
 {

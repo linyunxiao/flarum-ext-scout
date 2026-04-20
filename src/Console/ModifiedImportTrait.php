@@ -2,27 +2,18 @@
 
 namespace ClarkWinkelmann\Scout\Console;
 
-use ClarkWinkelmann\Scout\ScoutModelWrapper;
 use ClarkWinkelmann\Scout\ScoutStatic;
-use Illuminate\Contracts\Events\Dispatcher;
-use Laravel\Scout\Events\ModelsImported;
+use Illuminate\Support\LazyCollection;
 
+/**
+ * We can't override the trait method directly because ImportCommand overrides it
+ * So we re-declare the entire trait and change only the method we need
+ * Also updated for Scout 10+ compatibility
+ */
 trait ModifiedImportTrait
 {
-    protected function handleClass(Dispatcher $events, string $class)
+    protected function import($model): void
     {
-        $events->listen(ModelsImported::class, function ($event) use ($class) {
-            // The models in the event are the real models, not wrapped, so we can't use getScoutKey() directly
-            $key = (new ScoutModelWrapper($event->models->last()))->getScoutKey();
-
-            $this->line('<comment>Imported [' . $class . '] models up to ID:</comment> ' . $key);
-        });
-
-        // Same as original with this line modified to use ScoutStatic
-        ScoutStatic::makeAllSearchable($class, $this->option('chunk'));
-
-        $events->forget(ModelsImported::class);
-
-        $this->info('All [' . $class . '] records have been imported.');
+        ScoutStatic::makeAllSearchable($model);
     }
 }

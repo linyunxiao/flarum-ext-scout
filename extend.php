@@ -3,16 +3,15 @@
 namespace ClarkWinkelmann\Scout;
 
 use ClarkWinkelmann\Scout\Extend\Scout as ScoutExtend;
+use Flarum\Database\DatabaseSearcher;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\Event as DiscussionEvent;
-use Flarum\Discussion\Search\DiscussionSearcher;
 use Flarum\Extend;
 use Flarum\Post\CommentPost;
 use Flarum\Post\Post;
 use Flarum\Post\Event as PostEvent;
-use Flarum\User\Search\UserSearcher;
-use Flarum\User\User;
 use Flarum\User\Event as UserEvent;
+use Flarum\User\User;
 use FoF\UserBio\Event\BioChanged;
 use Laravel\Scout\Console as ScoutConsole;
 
@@ -25,10 +24,12 @@ return [
     (new Extend\ServiceProvider())
         ->register(ScoutServiceProvider::class),
 
-    (new Extend\SimpleFlarumSearch(DiscussionSearcher::class))
-        ->setFullTextGambit(Search\DiscussionGambit::class),
-    (new Extend\SimpleFlarumSearch(UserSearcher::class))
-        ->setFullTextGambit(Search\UserGambit::class),
+    // Use SearchDriver to add Scout fulltext search to Discussion and User searchers
+    (new Extend\SearchDriver(DatabaseSearcher::class))
+        ->addSearcher(Discussion::class, \Flarum\Discussion\Search\DiscussionSearcher::class)
+        ->addSearcher(User::class, \Flarum\User\Search\UserSearcher::class)
+        ->setFulltext(\Flarum\Discussion\Search\DiscussionSearcher::class, Search\DiscussionGambit::class)
+        ->setFulltext(\Flarum\User\Search\UserSearcher::class, Search\UserGambit::class),
 
     (new Extend\Console())
         ->command(Console\FlushCommand::class)
