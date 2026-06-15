@@ -1,7 +1,7 @@
 import app from 'flarum/admin/app';
 
 app.initializers.add('clarkwinkelmann-scout', () => {
-    app.extensionData.for('clarkwinkelmann-scout')
+    app.registry.for('clarkwinkelmann-scout')
         .registerSetting({
             type: 'select',
             setting: 'clarkwinkelmann-scout.driver',
