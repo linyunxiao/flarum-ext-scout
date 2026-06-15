@@ -3,7 +3,7 @@
 namespace ClarkWinkelmann\Scout\Search;
 
 use ClarkWinkelmann\Scout\ScoutStatic;
-use Flarum\Database\DatabaseSearchState;
+use Flarum\Search\Database\DatabaseSearchState;
 use Flarum\Discussion\Discussion;
 use Flarum\Post\Post;
 use Flarum\Search\AbstractFulltextFilter;
@@ -76,7 +76,7 @@ class DiscussionGambit extends AbstractFulltextFilter
             ->addBinding($bestMatchingPostQuery->getBindings(), 'join');
 
         $query
-            ->where(function (\Illuminate\Database\Query\Builder $query) use ($discussionIds) {
+            ->where(function (\Illuminate\Database\Eloquent\Builder $query) use ($discussionIds) {
                 $query
                     ->whereNotNull('most_relevant_post_id')
                     ->orWhereIn('id', $discussionIds);

@@ -3,7 +3,7 @@
 namespace ClarkWinkelmann\Scout;
 
 use ClarkWinkelmann\Scout\Extend\Scout as ScoutExtend;
-use Flarum\Database\DatabaseSearcher;
+use Flarum\Search\Database\DatabaseSearchDriver;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\Event as DiscussionEvent;
 use Flarum\Extend;
@@ -25,7 +25,7 @@ return [
         ->register(ScoutServiceProvider::class),
 
     // Use SearchDriver to add Scout fulltext search to Discussion and User searchers
-    (new Extend\SearchDriver(DatabaseSearcher::class))
+    (new Extend\SearchDriver(DatabaseSearchDriver::class))
         ->addSearcher(Discussion::class, \Flarum\Discussion\Search\DiscussionSearcher::class)
         ->addSearcher(User::class, \Flarum\User\Search\UserSearcher::class)
         ->setFulltext(\Flarum\Discussion\Search\DiscussionSearcher::class, Search\DiscussionGambit::class)

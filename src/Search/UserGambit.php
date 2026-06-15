@@ -3,7 +3,7 @@
 namespace ClarkWinkelmann\Scout\Search;
 
 use ClarkWinkelmann\Scout\ScoutStatic;
-use Flarum\Database\DatabaseSearchState;
+use Flarum\Search\Database\DatabaseSearchState;
 use Flarum\Search\AbstractFulltextFilter;
 use Flarum\Search\SearchState;
 use Flarum\User\User;
