@@ -195,7 +195,12 @@ class ScoutModelWrapper extends Model
 
     public function getScoutKeyName()
     {
-        return $this->realModel->getQualifiedKeyName();
+        // Must be the UNqualified key name ("id"), not the qualified one ("discussions.id").
+        // The qualified name contains a dot, which Meilisearch stores as a flat field with a
+        // literal dot, while Laravel Scout's mapIdsFrom() does collect()->pluck('discussions.id')
+        // — and pluck()/data_get() treats the dot as a nested path, so it never resolves the flat
+        // key and returns [null]. That makes every Scout fulltext search return zero results.
+        return $this->realModel->getKeyName();
     }
 
     protected static function usesSoftDelete()
